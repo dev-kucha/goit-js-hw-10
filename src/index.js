@@ -9,27 +9,15 @@ const searchBox = document.querySelector('#search-box');
 const countryList = document.querySelector('.country-list');
 const countryInfo = document.querySelector('.country-info');
 
-// const STATIC_URL = 'https://restcountries.com/v3.1/name/'; //delete
+let searchQuery = '';
 
 function onSearchTextInput(e) {
+  searchQuery = searchBox.value.trim();
   //   e.preventDefault();
-  //   console.log('onSearchTextInput function starts');
-  //   console.log(STATIC_URL);
-  //   console.log(e.currentTarget.value);
-  //   console.log(searchBox.value);
-  //   const searchQuery = searchBox.value;
-  //   console.log(fetchCountries(e));
-  fetchCountries(e)
+
+  fetchCountries(e, searchQuery)
     .then(countries => {
-      console.log(countries);
-      console.log(countries[0]);
-      console.log(countries[0].name.official);
-      console.log(countries[0].capital);
-      console.log(countries[0].population);
-      console.log(countries[0].flags);
-      console.log(countries[0].languages);
       return countries;
-      //   console.log(countries[0].name.common);
     })
     .then(countries => renderInterface(countries))
     .catch(err => {
@@ -40,11 +28,7 @@ function onSearchTextInput(e) {
     });
 }
 
-// let debouncedOnSearchTextInput = debounce(onSearchTextInput, DEBOUNCE_DELAY);
-// console.log(debouncedOnSearchTextInput);
-
 function renderInterface(coutries) {
-  // console.log('renderInterface starts');
   countryList.innerHTML = '';
   countryInfo.innerHTML = '';
 
@@ -73,9 +57,11 @@ function renderInterface(coutries) {
         <p>Languages: ${Object.values(coutries[0].languages).join(', ')}</p>
         `;
     countryInfo.innerHTML = markupC;
-    // console.log(coutries[0].languages.values(coutries[0]));
     return;
   }
 }
 
-searchBox.addEventListener('input', onSearchTextInput);
+searchBox.addEventListener(
+  'input',
+  debounce(onSearchTextInput, DEBOUNCE_DELAY)
+);
