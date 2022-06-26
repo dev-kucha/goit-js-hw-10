@@ -2,66 +2,90 @@ import './css/styles.css';
 import { fetchCountries } from './fetchCountries';
 import Notiflix from 'notiflix';
 
-let debounce = require('lodash.debounce');
-
+const debounce = require('lodash.debounce');
 const DEBOUNCE_DELAY = 300;
 const searchBox = document.querySelector('#search-box');
 const countryList = document.querySelector('.country-list');
 const countryInfo = document.querySelector('.country-info');
-
 let searchQuery = '';
 
-function onSearchTextInput(e) {
-  searchQuery = searchBox.value.trim();
-  //   e.preventDefault();
+searchBox.addEventListener(
+  'input',
+  debounce(onSearchTextInput, DEBOUNCE_DELAY)
+);
 
-  fetchCountries(e, searchQuery)
+function onSearchTextInput() {
+  searchQuery = searchBox.value.trim();
+
+  if (!searchQuery) {
+    clearList();
+    clearInfo();
+    return;
+  }
+
+  fetchCountries(searchQuery)
     .then(countries => {
       return countries;
     })
     .then(countries => renderInterface(countries))
     .catch(err => {
       console.log(err);
-      Notiflix.Notify.failure('Oops, there is no country with that name');
-      countryList.innerHTML = '';
-      countryInfo.innerHTML = '';
+      failNotyfyDisplay();
+      clearList();
+      clearInfo();
     });
 }
 
-function renderInterface(coutries) {
+function clearList() {
   countryList.innerHTML = '';
+}
+
+function clearInfo() {
   countryInfo.innerHTML = '';
+}
+
+function failNotyfyDisplay() {
+  return Notiflix.Notify.failure('Oops, there is no country with that name');
+}
+
+function toManyNotifyDisplay() {
+  return Notiflix.Notify.info(
+    'Too many matches found. Please enter a more specific name.'
+  );
+}
+
+function renderInterface(coutries) {
+  clearList();
+  clearInfo();
 
   if (coutries.length > 10) {
-    return Notiflix.Notify.info(
-      'Too many matches found. Please enter a more specific name.'
-    );
+    return toManyNotifyDisplay();
   }
+
   if (coutries.length > 1 && coutries.length <= 10) {
-    const markup = coutries
-      .map(counry => {
-        return `<li>
-        <img src="${counry.flags.svg}" width="50" >
-        ${counry.name.official}</li>`;
-      })
-      .join(' ');
-    countryList.innerHTML = markup;
-    return;
+    return renderList(coutries);
   }
 
   if (coutries.length == 1) {
-    const markupC = `<p><img src="${coutries[0].flags.svg}" width="100" >
-        ${coutries[0].name.official}</p>
-        <p>Capital: ${coutries[0].capital}</p>
-        <p>Population: ${coutries[0].population}</p>
-        <p>Languages: ${Object.values(coutries[0].languages).join(', ')}</p>
-        `;
-    countryInfo.innerHTML = markupC;
-    return;
+    return renderInfo(coutries[0]);
   }
 }
 
-searchBox.addEventListener(
-  'input',
-  debounce(onSearchTextInput, DEBOUNCE_DELAY)
-);
+function renderList(coutriesList) {
+  countryList.innerHTML = coutriesList
+    .map(coutriesList => {
+      return `<li>
+        <img src="${coutriesList.flags.svg}" width="50" >
+        ${coutriesList.name.official}</li>`;
+    })
+    .join(' ');
+}
+
+function renderInfo(coutry) {
+  countryInfo.innerHTML = `<p><img src="${coutry.flags.svg}" width="100" >
+        ${coutry.name.official}</p>
+        <p>Capital: ${coutry.capital}</p>
+        <p>Population: ${coutry.population}</p>
+        <p>Languages: ${Object.values(coutry.languages).join(', ')}</p>
+        `;
+}
